@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071713" />
+  <title>NHRP Rulebook</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="NHRP Rulebook home">
+      <span class="brand-mark">NHRP</span>
+      <span class="brand-sub">NEW HORIZONS ROLEPLAY</span>
+    </a>
+    <nav class="navlinks" aria-label="Rulebook navigation">
+      <a class="active" href="#rules">Rulebook</a>
+      <a href="#categories">Categories</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="discord-btn" id="discordTop" href="#" target="_blank" rel="noopener">
+      <span class="discord-icon">◉</span> Join Discord <span>→</span>
+    </a>
+  </header>
+
+  <main id="top" class="page-shell">
+    <aside class="arcade-rail left-rail" aria-label="Animated NHRP arcade scene">
+      <div class="city-glow glow-a"></div><div class="city-glow glow-b"></div>
+      <div class="neon-saying saying-one">KNOW<br>THE RULES</div>
+      <div class="pixel-window peeker-one">
+        <div class="peek-guy" aria-hidden="true">
+          <span class="hat"></span><span class="head"></span><span class="beard"></span><span class="shirt"></span><span class="arm"></span>
+        </div>
+      </div>
+      <div class="brick-stack stack-a"></div>
+      <div class="side-sign">STAY IN<br>CHARACTER</div>
+      <div class="pixel-window peeker-two">
+        <div class="peek-guy second" aria-hidden="true">
+          <span class="hat"></span><span class="head"></span><span class="beard"></span><span class="shirt"></span><span class="arm"></span>
+        </div>
+      </div>
+      <div class="neon-saying saying-two">SCENES<br>MATTER</div>
+      <div class="rail-footer">NHRP • EST. 2024</div>
+    </aside>
+
+    <section class="content-column">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">OFFICIAL NHRP RULEBOOK</div>
+          <h1>KNOW THE CODE.<br><span>OWN THE SCENE.</span></h1>
+          <p id="introText"></p>
+          <div class="hero-actions">
+            <a href="#rules" class="primary-btn">Browse Rules <span>→</span></a>
+            <button class="ghost-btn" id="openFaq">Open FAQ</button>
+          </div>
+        </div>
+        <div class="hero-city" aria-hidden="true">
+          <div class="moon"></div>
+          <div class="skyline skyline-back"></div>
+          <div class="skyline skyline-front"></div>
+          <div class="heli"><span class="rotor"></span><span class="beam"></span></div>
+          <div class="road"><span class="lane"></span><span class="car car-a"></span><span class="car car-b"></span></div>
+          <div class="hero-neon">STORY FIRST.<br>SCENE ALWAYS.</div>
+        </div>
+      </section>
+
+      <section id="categories" class="category-grid" aria-label="Rule categories"></section>
+
+      <section id="rules" class="rule-browser">
+        <div class="search-row">
+          <label class="search-box" for="ruleSearch">
+            <span class="magnify">⌕</span>
+            <input id="ruleSearch" autocomplete="off" placeholder="Search a rule, topic, or keyword…" />
+            <kbd>/</kbd>
+          </label>
+          <select id="sortSelect" aria-label="Sort rules">
+            <option value="source">Source order</option>
+            <option value="az">A–Z</option>
+          </select>
+        </div>
+        <div class="filter-row" id="filterRow"></div>
+        <div class="results-meta"><span id="resultCount"></span><button id="clearSearch" class="text-btn">Clear filters</button></div>
+        <div id="rulesList" class="rules-list"></div>
+      </section>
+
+      <section class="discipline" id="discipline">
+        <div class="section-heading">
+          <div><span class="eyebrow">DISCIPLINE REFERENCE</span><h2>Community Service & Punishment Matrix</h2></div>
+          <button class="ghost-btn small" id="toggleMatrix">Show Matrix</button>
+        </div>
+        <div id="progressiveWrap" class="table-card"></div>
+        <div id="matrixWrap" class="table-card matrix-card hidden"></div>
+      </section>
+
+      <section id="faq" class="faq-section">
+        <span class="eyebrow">QUICK HELP</span>
+        <h2>Rulebook FAQ</h2>
+        <div class="faq-grid">
+          <details><summary>How do I find a specific rule?</summary><p>Use the search box or press <strong>/</strong> anywhere on the page. Search checks rule titles and full rule text.</p></details>
+          <details><summary>Can I link someone directly to a rule?</summary><p>Yes. Open a rule and use the copy-link button. The URL will jump directly to that section.</p></details>
+          <details><summary>What if I am unsure how a rule applies?</summary><p>Use the Discord button and follow NHRP's ticket/report process. The rulebook itself remains the source text for this site.</p></details>
+        </div>
+      </section>
+    </section>
+
+    <aside class="arcade-rail right-rail" aria-label="Animated retro police chase">
+      <div class="arcade-title">NHRP CHASE</div>
+      <div class="hud"><span>SCORE <b id="score">012340</b></span><span>LIVES ♥♥♥</span><span>TIME <b id="gameTime">60</b></span></div>
+      <div class="game-screen" aria-hidden="true">
+        <div class="pixel-moon"></div>
+        <div class="pixel-city"></div>
+        <div class="platform p1"></div><div class="platform p2"></div><div class="platform p3"></div>
+        <div class="ladder l1"></div><div class="ladder l2"></div>
+        <div class="crate c1">▦</div><div class="crate c2">▦</div>
+        <div class="coin coin1">$</div><div class="coin coin2">$</div>
+        <div class="pixel-cop"><span class="cap"></span><span class="face"></span><span class="body"></span><span class="leg l"></span><span class="leg r"></span></div>
+        <div class="pixel-crook"><span class="hat"></span><span class="face"></span><span class="body"></span><span class="leg l"></span><span class="leg r"></span></div>
+        <div class="siren-flash red"></div><div class="siren-flash blue"></div>
+        <div class="game-message">CHASE MODE</div>
+      </div>
+      <div class="quick-card">
+        <h3>Quick Access</h3>
+        <a id="discordSide" href="#" target="_blank" rel="noopener">Join Discord <span>→</span></a>
+        <a href="#rules">Browse Rules <span>→</span></a>
+        <a href="#discipline">Punishment Matrix <span>→</span></a>
+        <a href="#faq">Rulebook FAQ <span>→</span></a>
+      </div>
+      <div class="pixel-window peeker-three">
+        <div class="peek-guy third" aria-hidden="true">
+          <span class="hat"></span><span class="head"></span><span class="beard"></span><span class="shirt"></span><span class="arm"></span>
+        </div>
+      </div>
+      <div class="quote-card">“CREATE THE SCENE.<br>DON'T JUST CHASE THE WIN.”<span>— NHRP</span></div>
+    </aside>
+  </main>
+
+  <footer>
+    <strong>NHRP Rulebook</strong><span id="revisedFooter"></span><span>New Horizons Roleplay</span>
+  </footer>
+
+  <dialog id="faqDialog">
+    <button class="dialog-close" id="closeFaq">×</button>
+    <h2>Quick Rulebook Help</h2>
+    <p>Search works across every rule title and the full rule text. Category chips filter the list instantly.</p>
+    <p>Open any rule card to read the full wording. Use <strong>Copy link</strong> to share a direct link to that rule.</p>
+    <a class="primary-btn dialog-discord" id="discordDialog" href="#" target="_blank" rel="noopener">Open NHRP Discord →</a>
+  </dialog>
+
+  <script src="rules-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
