@@ -1,44 +1,22 @@
-NHRP RULEBOOK SITE
-=================
+NHRP RULEBOOK SITE — VISUAL REBUILD
 
-Files:
-- index.html
-- styles.css
-- script.js
-- rules.json
-- rules-data.js (allows the site to work even when index.html is opened directly)
+This version was rebuilt to match the approved green/black New Horizons mockup much more closely.
 
-DEPLOY TO CLOUDFLARE PAGES
-1. Put these four files in the root of a GitHub repository.
-2. In Cloudflare Pages, connect the repository.
-3. Framework preset: None.
-4. Build command: leave blank.
-5. Output directory: / (or leave blank if Cloudflare accepts repository root).
-
-IMPORTANT: DISCORD LINK
-Open script.js and replace:
-const DISCORD_URL = "https://discord.gg/REPLACE_ME";
-with your actual Discord invite.
-
-ANIMATIONS INCLUDED
-- Retro cop/criminal chase on the right side
-- Running sprite legs and multi-level chase path
-- Siren flashes, coins, countdown timer and score
-- Heavy-set flannel/cowboy-hat character peeking from multiple spots
-- Moving helicopter and spotlight
-- Animated traffic
-- Neon flicker and HUD effects
-
-FUNCTIONAL FEATURES
-- Full-text rule search
-- Category filters
-- A-Z/source-order sorting
-- Expand/collapse rule cards
-- Direct links to individual rules
-- Copy rule-link button
-- Punishment/Comms tables from the source document
+Included:
+- Approved NHRP visual theme and logo treatment
+- Green/black Los Santos hero art
+- Retro arcade police chase side panel
+- Animated arcade runners, scan line, flashing siren lights, live score/time
+- Animated peeking flannel/cowboy-hat character on the left rail
+- Searchable/filterable full NHRP rulebook
+- Key Rules preview cards
+- Punishment / Comms reference tables
+- FAQ modal
 - Responsive mobile layout
-- Reduced-motion accessibility support
 
-RULE CONTENT
-The displayed rule text was generated from the provided NHRP Rules & Regulations DOCX (Revised August 24, 2026).
+IMPORTANT:
+Open script.js and replace:
+https://discord.gg/REPLACE_ME
+with the real NHRP Discord invite.
+
+Main file: index.html
