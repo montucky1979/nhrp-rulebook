@@ -1,5 +1,5 @@
 const CONFIG = window.NHRP_CONFIG || {};
-const FALLBACK_DISCORD_URL = CONFIG.FALLBACK_DISCORD_URL || "https://discord.gg/REPLACE_ME";
+const FALLBACK_DISCORD_URL = CONFIG.FALLBACK_DISCORD_URL || "https://discord.gg/newhorizonsrpfivem";
 
 const CATEGORY_CARDS = [
   {label:"Character & RP", icon:"♟", category:"Roleplay Standards", blurb:"Create believable characters and meaningful stories."},
