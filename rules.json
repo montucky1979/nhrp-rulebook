@@ -1,6 +1,6 @@
 {
   "title": "New Horizons Roleplay — Rules & Regulations",
-  "revised": "August 24, 2026",
+  "revised": "September 26, 2026",
   "intro": "Welcome to New Horizons Roleplay, where every decision shapes your destiny. New Horizons RP is a serious and immersive roleplay server built for players who value realism, depth, and the opportunity for a true fresh start. Whether you’re rising through the ranks of a powerful gang, serving the community within a structured and professional law enforcement agency, or building your path through a detailed and rewarding economy, every choice you make helps define your story. This is your city. This is your roleplay.",
   "sections": [
     {
@@ -1038,50 +1038,26 @@
       "category": "Police / LEO"
     },
     {
-      "title": "Safe Zones and Passive Zones",
+      "title": "Green Zones",
       "items": [
         {
-          "text": "Safe zones and passive zones are crime-free areas.",
+          "text": "Player-owned businesses are the only green zones in NHRP.",
           "level": 0
         },
         {
-          "text": "Police stations",
-          "level": 1
-        },
-        {
-          "text": "Player owned businesses",
-          "level": 1
-        },
-        {
-          "text": "Clothing Stores",
-          "level": 1
-        },
-        {
-          "text": "Fire/EMS stations",
-          "level": 1
-        },
-        {
-          "text": "Hospitals",
-          "level": 1
-        },
-        {
-          "text": "Courthouse (Inside and Outside)",
-          "level": 1
-        },
-        {
-          "text": "Prison parking lot",
-          "level": 1
-        },
-        {
-          "text": "No hiding in a safe zone for protection.",
+          "text": "All other locations are not considered green zones.",
           "level": 0
         },
         {
-          "text": "If a scene is started outside the safe zone and enters a safe zone, the scene may continue.",
+          "text": "No hiding inside a green zone for protection.",
           "level": 0
         },
         {
-          "text": "Players must be allowed 5 minutes after flying in to allow themselves to get ready for RP.",
+          "text": "If a scene begins outside a green zone and then enters a player-owned business, the active scene may continue.",
+          "level": 0
+        },
+        {
+          "text": "Players must be allowed 5 minutes after flying in to get ready for RP.",
           "level": 0
         }
       ],
@@ -1629,7 +1605,7 @@
           "level": 1
         },
         {
-          "text": "Factions can only “tie flags” with one faction at a time.",
+          "text": "Gangs and factions are not permitted to tie flags with another gang or faction.",
           "level": 1
         },
         {
@@ -1723,8 +1699,20 @@
           "level": 0
         },
         {
-          "text": "Faction Bleed Out: If a faction successfully flat backs or is body-bagged by EMS a member within 7 days of being released from the faction, the player will lose all memory of any faction-related knowledge. Receiving roadside treatment from EMS or care from a Black Medic doctor does not prevent the loss of this knowledge.",
+          "text": "Faction Bleed Out: A bleed-out must be carried out through meaningful, cinematic roleplay. Simply taking a former member to your compound and shooting them does not count as a successful bleed-out.",
           "level": 0
+        },
+        {
+          "text": "A successful bleed-out must include a developed roleplay scene that clearly establishes the faction’s intent to remove the former member’s faction knowledge.",
+          "level": 1
+        },
+        {
+          "text": "Once the cinematic bleed-out is completed and the former member is successfully flat-backed or body-bagged by EMS within 7 days of being released from the faction, the player loses all memory of faction-related knowledge.",
+          "level": 1
+        },
+        {
+          "text": "Receiving roadside treatment from EMS or care from a Black Medic doctor does not prevent the loss of faction-related knowledge after a successful bleed-out.",
+          "level": 1
         },
         {
           "text": "Factions are prohibited from using any custom mini peds purchased on the Tebex system.",

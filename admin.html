@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020705" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>NHRP Rulebook Admin</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <header class="admin-topbar">
+    <a class="admin-brand" href="index.html"><img src="nhrp-logo-transparent.png" alt="New Horizons Roleplay" /><span>RULEBOOK ADMIN</span></a>
+    <div class="top-actions">
+      <a class="ghost-btn" href="index.html" target="_blank">View Public Site ↗</a>
+      <button class="ghost-btn hidden" id="signOutBtn">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <section class="login-card" id="loginView">
+      <div class="eyebrow">AUTHORIZED ACCESS ONLY</div>
+      <h1>NHRP Rule Management</h1>
+      <p>Sign in with your NHRP rulebook administrator account.</p>
+      <form id="loginForm">
+        <label>Email<input id="loginEmail" type="email" autocomplete="username" required /></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button class="primary-btn" type="submit">Sign In</button>
+      </form>
+      <div class="status-text" id="loginStatus"></div>
+    </section>
+
+    <section class="hidden" id="adminView">
+      <div class="dashboard-head">
+        <div><span class="eyebrow">NHRP RULEBOOK CMS</span><h1>Rule Management</h1><p>Edit, publish, reorder, archive, and restore rules without touching GitHub.</p></div>
+        <div class="dashboard-actions"><button id="newRuleBtn" class="primary-btn">+ Add Rule</button><button id="settingsBtn" class="ghost-btn">Site Settings</button></div>
+      </div>
+
+      <div class="admin-grid">
+        <aside class="rule-sidebar">
+          <div class="sidebar-tools">
+            <input id="adminSearch" placeholder="Search rules..." />
+            <select id="statusFilter"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select>
+            <select id="categoryFilter"><option value="all">All categories</option></select>
+          </div>
+          <div id="ruleList" class="admin-rule-list"></div>
+        </aside>
+
+        <section class="editor-panel">
+          <div class="empty-editor" id="emptyEditor"><div class="empty-icon">▤</div><h2>Select a rule</h2><p>Choose a rule from the left or add a new one.</p></div>
+
+          <form id="ruleEditor" class="hidden">
+            <div class="editor-head">
+              <div><span class="eyebrow" id="editorMode">EDIT RULE</span><h2 id="editorHeading">Rule</h2></div>
+              <div class="editor-head-actions"><button type="button" class="ghost-btn" id="duplicateBtn">Duplicate</button><button type="button" class="danger-btn" id="archiveBtn">Archive</button></div>
+            </div>
+
+            <div class="editor-grid two-col">
+              <label>Rule title<input id="ruleTitle" required /></label>
+              <label>Category<input id="ruleCategory" list="categorySuggestions" required /><datalist id="categorySuggestions"></datalist></label>
+              <label>Sort order<input id="ruleSort" type="number" min="0" step="1" /></label>
+              <label>Status<select id="ruleStatus"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
+            </div>
+
+            <div class="featured-box">
+              <label class="check-row"><input id="ruleFeatured" type="checkbox" /> <span>Show this rule in the Key Rules section</span></label>
+              <div id="featuredFields" class="editor-grid three-col hidden">
+                <label>Card title<input id="featuredTitle" placeholder="Optional shorter title" /></label>
+                <label>Icon<input id="featuredIcon" placeholder="★" maxlength="8" /></label>
+                <label>Card description<input id="featuredDescription" placeholder="Short summary" /></label>
+              </div>
+            </div>
+
+            <div class="items-head"><div><h3>Rule Lines</h3><p>Use Level 0 for main bullets and Level 1+ for indented sub-points.</p></div><button type="button" class="ghost-btn" id="addItemBtn">+ Add Line</button></div>
+            <div id="itemsEditor" class="items-editor"></div>
+
+            <div class="preview-card">
+              <div class="preview-head"><strong>Preview</strong><span>How the rule will appear publicly</span></div>
+              <div id="rulePreview"></div>
+            </div>
+
+            <label>Change note <input id="changeNote" placeholder="Example: Clarified bleed-out requirement" /></label>
+
+            <div class="save-bar">
+              <div id="saveStatus" class="status-text"></div>
+              <div class="save-actions"><button type="button" class="ghost-btn" id="saveDraftBtn">Save Draft</button><button type="submit" class="primary-btn" id="publishBtn">Save & Publish</button></div>
+            </div>
+          </form>
+        </section>
+
+        <aside class="history-panel">
+          <div class="history-head"><h3>Change History</h3><span id="historyTitle">Select a rule</span></div>
+          <div id="historyList" class="history-list"><div class="history-empty">Published changes and rollback points will appear here.</div></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog">
+    <button class="dialog-close" id="closeSettings">×</button>
+    <span class="eyebrow">SITE SETTINGS</span>
+    <h2>Rulebook Settings</h2>
+    <label>Discord invite URL<input id="settingsDiscord" placeholder="https://discord.gg/..." /></label>
+    <label>Revision date<input id="settingsRevised" placeholder="September 26, 2026" /></label>
+    <p class="settings-note">Revision date is automatically updated whenever a rule is published. You can override it here.</p>
+    <div class="dialog-actions"><button id="saveSettings" class="primary-btn">Save Settings</button></div>
+    <div class="status-text" id="settingsStatus"></div>
+  </dialog>
+
+  <dialog id="confirmDialog">
+    <h2 id="confirmTitle">Confirm</h2>
+    <p id="confirmText"></p>
+    <div class="dialog-actions"><button id="confirmCancel" class="ghost-btn">Cancel</button><button id="confirmOk" class="danger-btn">Confirm</button></div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

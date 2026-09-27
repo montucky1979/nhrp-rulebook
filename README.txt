@@ -1,22 +1,21 @@
-NHRP RULEBOOK SITE — VISUAL REBUILD
+NHRP RULEBOOK + ADMIN CMS
 
-This version was rebuilt to match the approved green/black New Horizons mockup much more closely.
+Public site:
+  index.html
 
-Included:
-- Approved NHRP visual theme and logo treatment
-- Green/black Los Santos hero art
-- Retro arcade police chase side panel
-- Animated arcade runners, scan line, flashing siren lights, live score/time
-- Animated peeking flannel/cowboy-hat character on the left rail
-- Searchable/filterable full NHRP rulebook
-- Key Rules preview cards
-- Punishment / Comms reference tables
-- FAQ modal
-- Responsive mobile layout
+Private rule manager:
+  admin.html
+
+One-time setup files:
+  SETUP.md
+  supabase-schema.sql
+  supabase-seed.sql
+  supabase-make-admin.sql
+  supabase-config.js
+
+After Supabase setup, rule edits are made from admin.html and publish immediately.
+The existing rules.json / rules-data.js remain as an emergency public-site fallback.
 
 IMPORTANT:
-Open script.js and replace:
-https://discord.gg/REPLACE_ME
-with the real NHRP Discord invite.
-
-Main file: index.html
+Only place the Supabase public/publishable (anon) key in supabase-config.js.
+Never place a Supabase service_role secret key in this website.

@@ -1,4 +1,5 @@
-const DISCORD_URL = "https://discord.gg/REPLACE_ME";
+const CONFIG = window.NHRP_CONFIG || {};
+const FALLBACK_DISCORD_URL = CONFIG.FALLBACK_DISCORD_URL || "https://discord.gg/REPLACE_ME";
 
 const CATEGORY_CARDS = [
   {label:"Character & RP", icon:"♟", category:"Roleplay Standards", blurb:"Create believable characters and meaningful stories."},
@@ -10,7 +11,7 @@ const CATEGORY_CARDS = [
   {label:"General Rules", icon:"★", category:"General Rules", blurb:"The foundation of NHRP."}
 ];
 
-const FEATURED = [
+const FALLBACK_FEATURED = [
   {title:"Be Serious", icon:"🎭", section:"Fail RP", desc:"Keep RP realistic, mature, and story-driven at all times."},
   {title:"Respect Everyone", icon:"👥", section:"General Rules", desc:"Treat players and staff with respect. Keep the community positive."},
   {title:"No Random Deathmatch", icon:"☠", section:"Random Deathmatch (RDM)", desc:"Violence must have valid roleplay interaction and consequence."},
@@ -22,6 +23,7 @@ const FEATURED = [
 ];
 
 let data;
+let db = null;
 let activeCategory = "All";
 let query = "";
 let sortMode = "source";
@@ -38,11 +40,75 @@ function hi(s){
 }
 function categories(){return [...new Set(data.sections.map(s=>s.category))]}
 function findSection(title){return data.sections.find(s=>s.title===title)}
+function validSupabaseConfig(){
+  return Boolean(CONFIG.USE_SUPABASE && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY &&
+    !CONFIG.SUPABASE_URL.includes("YOUR-PROJECT") && !CONFIG.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE"));
+}
+
+async function loadFallback(){
+  if(window.RULES_DATA) return JSON.parse(JSON.stringify(window.RULES_DATA));
+  return await fetch("rules.json").then(r=>r.json());
+}
+
+async function loadFromSupabase(fallback){
+  if(!validSupabaseConfig() || !window.supabase) return fallback;
+  try{
+    db = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const [{data:sections,error:sectionErr},{data:settings,error:settingsErr}] = await Promise.all([
+      db.from("rulebook_sections")
+        .select("id,title,category,slug,sort_order,status,featured,featured_title,featured_icon,featured_description,updated_at,published_at")
+        .eq("status","published")
+        .order("sort_order",{ascending:true}),
+      db.from("rulebook_settings").select("key,value")
+    ]);
+    if(sectionErr) throw sectionErr;
+    if(!sections?.length) return fallback;
+
+    const ids = sections.map(s=>s.id);
+    const {data:items,error:itemErr} = await db.from("rulebook_items")
+      .select("section_id,text,level,sort_order")
+      .in("section_id",ids)
+      .order("sort_order",{ascending:true});
+    if(itemErr) throw itemErr;
+
+    const bySection = new Map();
+    (items||[]).forEach(i=>{
+      if(!bySection.has(i.section_id)) bySection.set(i.section_id,[]);
+      bySection.get(i.section_id).push({text:i.text,level:Number(i.level)||0});
+    });
+    const settingsMap = Object.fromEntries((settings||[]).map(s=>[s.key,s.value]));
+    return {
+      ...fallback,
+      revised: settingsMap.revised_date || fallback.revised,
+      sections: sections.map(s=>({
+        id:s.id,
+        title:s.title,
+        category:s.category,
+        slug:s.slug || slugify(s.title),
+        sort_order:s.sort_order,
+        featured:Boolean(s.featured),
+        featured_title:s.featured_title,
+        featured_icon:s.featured_icon,
+        featured_description:s.featured_description,
+        items:bySection.get(s.id)||[]
+      })),
+      progressiveTable: settingsMap.progressive_table || fallback.progressiveTable,
+      matrixTable: settingsMap.matrix_table || fallback.matrixTable,
+      discordUrl: settingsMap.discord_url || FALLBACK_DISCORD_URL,
+      source:"supabase"
+    };
+  }catch(err){
+    console.warn("Supabase rulebook unavailable; using local fallback.",err);
+    return fallback;
+  }
+}
 
 async function init(){
-  data = window.RULES_DATA || await fetch("rules.json").then(r=>r.json());
+  const fallback = await loadFallback();
+  data = await loadFromSupabase(fallback);
+  const discordUrl = data.discordUrl || FALLBACK_DISCORD_URL;
   $("#revisedFooter").textContent = `Rules revised ${data.revised}`;
-  ["#discordTop","#discordSide"].forEach(sel=>{ const el=$(sel); if(el) el.href=DISCORD_URL; });
+  ["#discordTop","#discordSide"].forEach(sel=>{ const el=$(sel); if(el) el.href=discordUrl; });
   renderCategories();
   renderFilters();
   renderFeatured();
@@ -83,17 +149,30 @@ function renderFilters(){
 }
 function syncFilters(){ $$(".filter-chip").forEach(b=>b.classList.toggle("active",b.textContent===activeCategory)); }
 
+function getFeatured(){
+  const live = data.sections.filter(s=>s.featured).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  if(live.length){
+    return live.slice(0,8).map(s=>({
+      title:s.featured_title || s.title,
+      icon:s.featured_icon || "★",
+      section:s.title,
+      desc:s.featured_description || (s.items?.[0]?.text || "Open this rule for details.")
+    }));
+  }
+  return FALLBACK_FEATURED;
+}
+
 function renderFeatured(){
   const wrap=$("#featuredRules");
   wrap.innerHTML="";
-  FEATURED.forEach((item,i)=>{
+  getFeatured().forEach((item,i)=>{
     const section=findSection(item.section);
     if(!section) return;
-    const id="rule-"+slugify(section.title);
+    const id="rule-"+(section.slug || slugify(section.title));
     const card=document.createElement("article");
     card.className="featured-card";
     card.tabIndex=0;
-    card.innerHTML=`<div class="featured-top"><span class="featured-num">${String(i+1).padStart(2,"0")}</span><span class="featured-ico">${item.icon}</span></div><h3>${esc(item.title)}</h3><p>${esc(item.desc)}</p>`;
+    card.innerHTML=`<div class="featured-top"><span class="featured-num">${String(i+1).padStart(2,"0")}</span><span class="featured-ico">${esc(item.icon)}</span></div><h3>${esc(item.title)}</h3><p>${esc(item.desc)}</p>`;
     const go=()=>{location.hash=id;activeCategory="All";syncFilters();query="";$("#ruleSearch").value="";renderRules();openHashRule()};
     card.onclick=go;
     card.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}};
@@ -114,7 +193,7 @@ function renderRules(){
   wrap.innerHTML="";
   if(!arr.length){wrap.innerHTML='<div class="empty-state"><strong>No matching rules.</strong><br>Try another keyword or clear the filters.</div>';return}
   arr.forEach(s=>{
-    const id="rule-"+slugify(s.title);
+    const id="rule-"+(s.slug || slugify(s.title));
     const d=document.createElement("details");
     d.className="rule-card";
     d.id=id;
