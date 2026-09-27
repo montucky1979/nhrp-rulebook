@@ -8,6 +8,9 @@ let selectedId = null;
 let editorItems = [];
 let confirmResolver = null;
 let settingsCache = {};
+let verificationTimer = null;
+let discordAccess = null;
+const PROVIDER_TOKEN_KEY = "nhrp_rulebook_discord_provider_token";
 
 function slugify(s){return (s||"").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
 function esc(s){return (s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
@@ -17,22 +20,33 @@ function setStatus(el,msg,type=""){el.textContent=msg||"";el.className="status-t
 
 async function init(){
   if(!validConfig() || !window.supabase){
-    setStatus($("#loginStatus"),"Supabase is not configured yet. Open supabase-config.js and add your project URL and anon key.","error");
+    setStatus($("#loginStatus"),"Supabase is not configured yet. Open supabase-config.js and add your project URL and publishable key.","error");
     return;
   }
   db = window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   bind();
+
+  db.auth.onAuthStateChange((event,newSession)=>{
+    if(newSession?.provider_token){
+      sessionStorage.setItem(PROVIDER_TOKEN_KEY,newSession.provider_token);
+    }
+    if(event==="SIGNED_OUT"){
+      sessionStorage.removeItem(PROVIDER_TOKEN_KEY);
+      setTimeout(showLogin,0);
+      return;
+    }
+    if(newSession && (event==="SIGNED_IN" || event==="INITIAL_SESSION" || event==="TOKEN_REFRESHED")){
+      setTimeout(()=>enterAdmin(newSession),0);
+    }
+  });
+
   const {data:{session:existing}} = await db.auth.getSession();
   if(existing) await enterAdmin(existing);
-  db.auth.onAuthStateChange(async (_event,newSession)=>{
-    if(newSession && !session) await enterAdmin(newSession);
-    if(!newSession && session) showLogin();
-  });
 }
 
 function bind(){
-  $("#loginForm").addEventListener("submit",login);
-  $("#signOutBtn").onclick=()=>db.auth.signOut();
+  $("#discordLoginBtn").onclick=loginWithDiscord;
+  $("#signOutBtn").onclick=signOut;
   $("#newRuleBtn").onclick=newRule;
   $("#adminSearch").addEventListener("input",renderRuleList);
   $("#statusFilter").addEventListener("change",renderRuleList);
@@ -53,38 +67,107 @@ function bind(){
   });
 }
 
-async function login(e){
-  e.preventDefault();
-  setStatus($("#loginStatus"),"Signing in...");
-  const {data,error} = await db.auth.signInWithPassword({email:$("#loginEmail").value.trim(),password:$("#loginPassword").value});
-  if(error){setStatus($("#loginStatus"),error.message,"error");return;}
-  await enterAdmin(data.session);
+async function loginWithDiscord(){
+  setStatus($("#loginStatus"),"Opening Discord verification...");
+  const redirectTo = new URL("admin.html",window.location.href).href;
+  const {error}=await db.auth.signInWithOAuth({
+    provider:"discord",
+    options:{
+      redirectTo,
+      scopes:"identify email guilds.members.read"
+    }
+  });
+  if(error) setStatus($("#loginStatus"),error.message,"error");
+}
+
+async function signOut(){
+  stopVerificationRefresh();
+  sessionStorage.removeItem(PROVIDER_TOKEN_KEY);
+  await db.auth.signOut();
+}
+
+async function verifyDiscordAccess(newSession,{silent=false}={}){
+  const providerToken = newSession?.provider_token || sessionStorage.getItem(PROVIDER_TOKEN_KEY);
+  if(newSession?.provider_token) sessionStorage.setItem(PROVIDER_TOKEN_KEY,newSession.provider_token);
+  if(!providerToken){
+    return {authorized:false,reason:"reverify_required",message:"Discord verification expired. Click Continue with Discord again."};
+  }
+
+  if(!silent) setStatus($("#loginStatus"),"Verifying your NHRP Discord role...");
+  const {data,error}=await db.functions.invoke("verify-discord-admin",{body:{provider_token:providerToken}});
+  if(error){
+    const message = data?.reason==="required_role_missing"
+      ? "Access denied. The NHRP Owner or Executive Discord role is required."
+      : data?.reason==="not_in_nhrp_or_scope_missing"
+        ? "Access denied. You must be in the NHRP Discord and approve the server-member verification scope."
+        : data?.reason==="discord_token_invalid"
+          ? "Discord verification expired. Sign in with Discord again."
+          : (data?.detail || error.message || "Discord verification failed.");
+    return {authorized:false,reason:data?.reason||"verification_error",message};
+  }
+  if(!data?.authorized){
+    return {authorized:false,reason:data?.reason||"not_authorized",message:"Access denied. The NHRP Owner or Executive Discord role is required."};
+  }
+  return data;
 }
 
 async function enterAdmin(newSession){
+  if(session?.access_token===newSession?.access_token && !$("#adminView").classList.contains("hidden")) return;
   session = newSession;
-  const {data:isAdmin,error} = await db.rpc("is_rulebook_admin");
-  if(error || !isAdmin){
-    setStatus($("#loginStatus"),"This account is signed in but is not authorized as a Rulebook Admin.","error");
-    await db.auth.signOut();
+  const result = await verifyDiscordAccess(newSession);
+  if(!result?.authorized){
+    setStatus($("#loginStatus"),result?.message||"Discord verification failed.","error");
+    stopVerificationRefresh();
+    if(result?.reason==="required_role_missing" || result?.reason==="not_in_nhrp_or_scope_missing" || result?.reason==="discord_login_required"){
+      await db.auth.signOut();
+    }
     return;
   }
+
+  discordAccess=result;
   $("#loginView").classList.add("hidden");
   $("#adminView").classList.remove("hidden");
   $("#signOutBtn").classList.remove("hidden");
+  const identity=$("#discordIdentity");
+  identity.innerHTML=`<b>${esc(result.role||"NHRP Admin")}</b> · ${esc(result.display_name||"Discord verified")}`;
+  identity.classList.remove("hidden");
+  startVerificationRefresh();
   await Promise.all([loadRules(),loadSettings()]);
 }
 
+function startVerificationRefresh(){
+  stopVerificationRefresh();
+  verificationTimer=setInterval(async()=>{
+    if(!session) return;
+    const result=await verifyDiscordAccess(session,{silent:true});
+    if(!result?.authorized){
+      stopVerificationRefresh();
+      alert("Your Discord admin access could not be re-verified. Please sign in with Discord again.");
+      await signOut();
+    }else{
+      discordAccess=result;
+      const identity=$("#discordIdentity");
+      identity.innerHTML=`<b>${esc(result.role||"NHRP Admin")}</b> · ${esc(result.display_name||"Discord verified")}`;
+    }
+  },10*60*1000);
+}
+
+function stopVerificationRefresh(){
+  if(verificationTimer){clearInterval(verificationTimer);verificationTimer=null;}
+}
+
 function showLogin(){
-  session=null; rules=[]; selectedId=null;
+  session=null; discordAccess=null; rules=[]; selectedId=null;
+  stopVerificationRefresh();
   $("#adminView").classList.add("hidden");
   $("#signOutBtn").classList.add("hidden");
+  $("#discordIdentity").classList.add("hidden");
   $("#loginView").classList.remove("hidden");
 }
 
 async function loadRules(preserveSelection=true){
   const {data,error}=await db.from("rulebook_sections")
-    .select("id,title,category,slug,sort_order,status,featured,featured_title,featured_icon,featured_description,created_at,updated_at,published_at,draft_payload")
+    .select("id,title,category,slug,sort_order,status,featured,featured_title,featured_icon,featured_description,created_at,updated_at,published_at,last_published_at,last_change_note,last_change_type,draft_payload")
     .order("sort_order",{ascending:true}).order("title",{ascending:true});
   if(error){alert("Could not load rules: "+error.message);return;}
   rules=data||[];
@@ -117,7 +200,9 @@ function renderRuleList(){
   list.forEach((r,index)=>{
     const div=document.createElement("div");
     div.className="rule-list-item"+(r.id===selectedId?" active":"");
-    div.innerHTML=`<div><strong>${esc(r.title)}</strong><div class="rule-list-meta"><span>${esc(r.category)}</span><span class="status-badge status-${r.status}">${r.status}</span>${r.featured?'<span>★ Key Rule</span>':''}${r.draft_payload?'<span class="status-badge status-draft">Draft changes</span>':''}</div></div><div class="order-controls"><button type="button" data-dir="-1" title="Move up">↑</button><button type="button" data-dir="1" title="Move down">↓</button></div>`;
+    const recentDays=Math.max(1,Number(settingsCache.recent_days)||14);
+    const isRecent=r.last_published_at && (Date.now()-new Date(r.last_published_at).getTime()) <= recentDays*86400000;
+    div.innerHTML=`<div><strong>${esc(r.title)}</strong><div class="rule-list-meta"><span>${esc(r.category)}</span><span class="status-badge status-${r.status}">${r.status}</span>${r.featured?'<span>★ Key Rule</span>':''}${isRecent?`<span class="recent-admin-badge">${esc((r.last_change_type||"updated").toUpperCase())}</span>`:''}${r.draft_payload?'<span class="status-badge status-draft">Draft changes</span>':''}</div></div><div class="order-controls"><button type="button" data-dir="-1" title="Move up">↑</button><button type="button" data-dir="1" title="Move down">↓</button></div>`;
     div.querySelector("div:first-child").onclick=()=>selectRule(r.id);
     div.querySelectorAll(".order-controls button").forEach(b=>b.onclick=e=>{e.stopPropagation();moveRule(r.id,Number(b.dataset.dir));});
     wrap.appendChild(div);
@@ -319,6 +404,7 @@ async function loadSettings(){
 function openSettings(){
   $("#settingsDiscord").value=settingsCache.discord_url||CONFIG.FALLBACK_DISCORD_URL||"";
   $("#settingsRevised").value=settingsCache.revised_date||todayLabel();
+  $("#settingsRecentDays").value=Math.max(1,Math.min(90,Number(settingsCache.recent_days)||14));
   setStatus($("#settingsStatus"),"");
   $("#settingsDialog").showModal();
 }
@@ -326,11 +412,12 @@ async function saveSettings(){
   setStatus($("#settingsStatus"),"Saving...");
   const rows=[
     {key:"discord_url",value:$("#settingsDiscord").value.trim()},
-    {key:"revised_date",value:$("#settingsRevised").value.trim()}
+    {key:"revised_date",value:$("#settingsRevised").value.trim()},
+    {key:"recent_days",value:Math.max(1,Math.min(90,Number($("#settingsRecentDays").value)||14))}
   ];
   const {error}=await db.from("rulebook_settings").upsert(rows,{onConflict:"key"});
   if(error){setStatus($("#settingsStatus"),error.message,"error");return;}
-  await loadSettings(); setStatus($("#settingsStatus"),"Saved. Public site settings update immediately.","ok");
+  await loadSettings(); renderRuleList(); setStatus($("#settingsStatus"),"Saved. Public site settings update immediately.","ok");
 }
 
 function confirmBox(title,text){

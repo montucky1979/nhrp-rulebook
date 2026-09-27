@@ -1,21 +1,28 @@
-NHRP RULEBOOK + ADMIN CMS
+NHRP RULEBOOK CMS — DISCORD ADMIN EDITION
 
-Public site:
-  index.html
+Public rulebook design retained.
 
-Private rule manager:
-  admin.html
+New in this build:
+- Discord OAuth admin sign-in
+- NHRP Server verification
+- Owner + Executive role verification
+- Owner and Executive have identical full permissions
+- Role access is rechecked while the admin page is open
+- Recently Changed Rules public panel
+- NEW / UPDATED badges and dates
+- Configurable recent-highlight duration (default 14 days)
+- Change notes displayed with recent updates
+- Existing rules are not falsely marked as recently changed on upgrade
 
-One-time setup files:
-  SETUP.md
-  supabase-schema.sql
-  supabase-seed.sql
-  supabase-make-admin.sql
-  supabase-config.js
+CURRENT DISCORD IDS
+Server:    1535665131042639952
+Executive: 1535665132720488481
+Owner:     1535665132720488482
 
-After Supabase setup, rule edits are made from admin.html and publish immediately.
-The existing rules.json / rules-data.js remain as an emergency public-site fallback.
+For an existing Supabase project, run:
+supabase-discord-upgrade.sql
 
-IMPORTANT:
-Only place the Supabase public/publishable (anon) key in supabase-config.js.
-Never place a Supabase service_role secret key in this website.
+Then deploy the Edge Function using:
+verify-discord-admin.ts
+
+See DISCORD_ADMIN_SETUP.md for the complete one-time setup.

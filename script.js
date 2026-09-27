@@ -1,5 +1,5 @@
 const CONFIG = window.NHRP_CONFIG || {};
-const FALLBACK_DISCORD_URL = CONFIG.FALLBACK_DISCORD_URL || "https://discord.gg/newhorizonsrpfivem";
+const FALLBACK_DISCORD_URL = CONFIG.FALLBACK_DISCORD_URL || "https://discord.gg/REPLACE_ME";
 
 const CATEGORY_CARDS = [
   {label:"Character & RP", icon:"♟", category:"Roleplay Standards", blurb:"Create believable characters and meaningful stories."},
@@ -56,7 +56,7 @@ async function loadFromSupabase(fallback){
     db = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const [{data:sections,error:sectionErr},{data:settings,error:settingsErr}] = await Promise.all([
       db.from("rulebook_sections")
-        .select("id,title,category,slug,sort_order,status,featured,featured_title,featured_icon,featured_description,updated_at,published_at")
+        .select("id,title,category,slug,sort_order,status,featured,featured_title,featured_icon,featured_description,updated_at,published_at,last_published_at,last_change_note,last_change_type")
         .eq("status","published")
         .order("sort_order",{ascending:true}),
       db.from("rulebook_settings").select("key,value")
@@ -90,11 +90,15 @@ async function loadFromSupabase(fallback){
         featured_title:s.featured_title,
         featured_icon:s.featured_icon,
         featured_description:s.featured_description,
+        last_published_at:s.last_published_at,
+        last_change_note:s.last_change_note,
+        last_change_type:s.last_change_type,
         items:bySection.get(s.id)||[]
       })),
       progressiveTable: settingsMap.progressive_table || fallback.progressiveTable,
       matrixTable: settingsMap.matrix_table || fallback.matrixTable,
       discordUrl: settingsMap.discord_url || FALLBACK_DISCORD_URL,
+      recentDays: Math.max(1,Math.min(90,Number(settingsMap.recent_days)||14)),
       source:"supabase"
     };
   }catch(err){
@@ -110,6 +114,7 @@ async function init(){
   $("#revisedFooter").textContent = `Rules revised ${data.revised}`;
   ["#discordTop","#discordSide"].forEach(sel=>{ const el=$(sel); if(el) el.href=discordUrl; });
   renderCategories();
+  renderRecentChanges();
   renderFilters();
   renderFeatured();
   renderRules();
@@ -117,6 +122,58 @@ async function init(){
   bind();
   startArcade();
   openHashRule();
+}
+
+function formatChangeDate(value){
+  if(!value) return "";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+
+function isRecentRule(section){
+  if(!section?.last_published_at) return false;
+  const days=Math.max(1,Number(data?.recentDays)||14);
+  const age=Date.now()-new Date(section.last_published_at).getTime();
+  return age>=0 && age<=days*86400000;
+}
+
+function renderRecentChanges(){
+  const section=$("#recentChanges");
+  const wrap=$("#recentChangedList");
+  if(!section||!wrap) return;
+  const days=Math.max(1,Number(data?.recentDays)||14);
+  const recent=data.sections
+    .filter(isRecentRule)
+    .sort((a,b)=>new Date(b.last_published_at)-new Date(a.last_published_at))
+    .slice(0,6);
+
+  if(!recent.length){
+    section.classList.add("hidden");
+    wrap.innerHTML="";
+    return;
+  }
+
+  $("#recentWindow").textContent=`Last ${days} days`;
+  wrap.innerHTML="";
+  recent.forEach(rule=>{
+    const type=(rule.last_change_type||"updated").toLowerCase()==="new"?"new":"updated";
+    const card=document.createElement("button");
+    card.type="button";
+    card.className="recent-card";
+    card.innerHTML=`<div class="recent-card-top"><span class="recent-badge ${type}">${type==="new"?"NEW":"UPDATED"}</span><span class="recent-date">${esc(formatChangeDate(rule.last_published_at))}</span></div><strong>${esc(rule.title)}</strong><small>${esc(rule.category)}</small>${rule.last_change_note?`<p>${esc(rule.last_change_note)}</p>`:""}`;
+    card.onclick=()=>{
+      activeCategory="All";
+      query="";
+      $("#ruleSearch").value="";
+      syncFilters();
+      renderRules();
+      location.hash="rule-"+(rule.slug||slugify(rule.title));
+      openHashRule();
+    };
+    wrap.appendChild(card);
+  });
+  section.classList.remove("hidden");
 }
 
 function renderCategories(){
@@ -198,7 +255,9 @@ function renderRules(){
     d.className="rule-card";
     d.id=id;
     const items=s.items.map(it=>`<li class="${it.level>0?"sub":""}">${hi(it.text)}</li>`).join("");
-    d.innerHTML=`<summary class="rule-summary"><span class="rule-num">${String(s._i+1).padStart(2,"0")}</span><div><div class="rule-title">${hi(s.title)}</div><div class="rule-cat">${esc(s.category)}</div></div><span class="rule-chevron">›</span></summary><div class="rule-body"><ul>${items||"<li>See the official rulebook section.</li>"}</ul><div class="rule-tools"><button class="copy-link" data-link="${id}">Copy rule link</button></div></div>`;
+    const recentType=isRecentRule(s)?((s.last_change_type||"updated").toLowerCase()==="new"?"new":"updated"):null;
+    const recentBadge=recentType?`<span class="recent-rule-badge ${recentType}">${recentType==="new"?"NEW":"UPDATED"} · ${esc(formatChangeDate(s.last_published_at))}</span>`:"";
+    d.innerHTML=`<summary class="rule-summary"><span class="rule-num">${String(s._i+1).padStart(2,"0")}</span><div><div class="rule-title-line"><div class="rule-title">${hi(s.title)}</div>${recentBadge}</div><div class="rule-cat">${esc(s.category)}</div></div><span class="rule-chevron">›</span></summary><div class="rule-body"><ul>${items||"<li>See the official rulebook section.</li>"}</ul><div class="rule-tools"><button class="copy-link" data-link="${id}">Copy rule link</button></div></div>`;
     wrap.appendChild(d);
   });
   $$(".copy-link").forEach(b=>b.onclick=e=>{

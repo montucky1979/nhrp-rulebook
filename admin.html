@@ -13,6 +13,7 @@
   <header class="admin-topbar">
     <a class="admin-brand" href="index.html"><img src="nhrp-logo-transparent.png" alt="New Horizons Roleplay" /><span>RULEBOOK ADMIN</span></a>
     <div class="top-actions">
+      <span class="discord-identity hidden" id="discordIdentity"></span>
       <a class="ghost-btn" href="index.html" target="_blank">View Public Site ↗</a>
       <button class="ghost-btn hidden" id="signOutBtn">Sign Out</button>
     </div>
@@ -20,14 +21,15 @@
 
   <main class="admin-shell">
     <section class="login-card" id="loginView">
-      <div class="eyebrow">AUTHORIZED ACCESS ONLY</div>
+      <div class="eyebrow">DISCORD VERIFIED ACCESS</div>
       <h1>NHRP Rule Management</h1>
-      <p>Sign in with your NHRP rulebook administrator account.</p>
-      <form id="loginForm">
-        <label>Email<input id="loginEmail" type="email" autocomplete="username" required /></label>
-        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
-        <button class="primary-btn" type="submit">Sign In</button>
-      </form>
+      <p>Admin access is limited to members with the <strong>Owner</strong> or <strong>Executive</strong> role in the NHRP Discord. Both roles have the same full access.</p>
+      <button class="discord-login-btn" id="discordLoginBtn" type="button">
+        <span class="discord-mark">◈</span>
+        <span>Continue with Discord</span>
+        <span>→</span>
+      </button>
+      <div class="login-security-note">Your Discord role is verified when you enter the admin panel and rechecked while the panel is open.</div>
       <div class="status-text" id="loginStatus"></div>
     </section>
 
@@ -101,9 +103,10 @@
     <button class="dialog-close" id="closeSettings">×</button>
     <span class="eyebrow">SITE SETTINGS</span>
     <h2>Rulebook Settings</h2>
-    <label>Discord invite URL<input id="settingsDiscord" placeholder="https://discord.gg/newhorizonsrpfivem" /></label>
+    <label>Discord invite URL<input id="settingsDiscord" placeholder="https://discord.gg/..." /></label>
     <label>Revision date<input id="settingsRevised" placeholder="September 26, 2026" /></label>
-    <p class="settings-note">Revision date is automatically updated whenever a rule is published. You can override it here.</p>
+    <label>Recently Changed highlight duration (days)<input id="settingsRecentDays" type="number" min="1" max="90" step="1" value="14" /></label>
+    <p class="settings-note">Revision date updates automatically whenever a rule is published. Recently Changed rules are highlighted for the number of days above.</p>
     <div class="dialog-actions"><button id="saveSettings" class="primary-btn">Save Settings</button></div>
     <div class="status-text" id="settingsStatus"></div>
   </dialog>
